@@ -70,9 +70,11 @@ def _post_with_retries(url, headers, payload, timeout=60, max_retries=5):
                     wait = float(retry_after) if retry_after is not None else backoff
                 except Exception:
                     wait = backoff
-                time.sleep(wait)
-                backoff = min(backoff * 2, 60)
-                continue
+                if attempt < max_retries:
+                    time.sleep(wait)
+                    backoff = min(backoff * 2, 60)
+                    continue
+                raise RuntimeError(f"LLM request rate-limited after {max_retries} attempts")
             r.raise_for_status()
             return r
         except HTTPError as e:
@@ -82,6 +84,14 @@ def _post_with_retries(url, headers, payload, timeout=60, max_retries=5):
                 backoff = min(backoff * 2, 60)
                 continue
             raise
+        except requests.RequestException:
+            if attempt < max_retries:
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 60)
+                continue
+            raise
+
+    raise RuntimeError(f"LLM request failed after {max_retries} attempts")
 
 
 
@@ -122,6 +132,8 @@ def extract_clinical_data(segments: list[dict]) -> dict:
             "soap": {"subjective": "", "objective": "", "assessment": "", "plan": ""},
             "action_items": [],
         }
+    if resp is None:
+        raise RuntimeError("LLM response was empty after retry attempts")
     content = resp.json()["choices"][0]["message"]["content"]
 
     # some models wrap JSON in ```json fences despite instructions — strip defensively
