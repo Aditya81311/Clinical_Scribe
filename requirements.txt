@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+jinja2
+python-multipart
+passlib
+itsdangerous
+email-validator
+requests
+python-dotenv
+
+# Speech + LLM pipeline (unchanged from the original prototype)
+torch
+transformers
+librosa
+soundfile

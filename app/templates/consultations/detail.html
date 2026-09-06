@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} · Consultation · Scribe{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-8 py-10">
+
+  <a href="/patients/{{ patient.id }}" class="inline-flex items-center gap-1.5 text-sm text-ink/50 hover:text-ink mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    {{ patient.name }}
+  </a>
+
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold text-ink tracking-tight">Consultation note</h1>
+      <p class="mt-1 text-sm text-ink/55">{{ patient.name }} · {{ consultation.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+    </div>
+  </div>
+
+      <div id="consultation-status"
+           hx-get="/consultations/{{ consultation.id }}/status-partial"
+           hx-trigger="load"
+           hx-swap="innerHTML">
+        <div id="consultation-poll"
+             hx-get="/consultations/{{ consultation.id }}/status-partial"
+             hx-trigger="every 2.5s"
+             hx-swap="outerHTML"
+             class="rounded-xl border border-line bg-white shadow-sm px-8 py-16 flex flex-col items-center justify-center gap-5">
+          <div class="waveform"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+          <div class="text-center">
+            <p class="text-sm font-medium text-ink">Transcribing and extracting the chart note</p>
+            <p class="mt-1 text-xs text-ink/50">This runs in the background — feel free to leave this page and come back.</p>
+          </div>
+        </div>
+      </div>
+</div>
+{% endblock %}

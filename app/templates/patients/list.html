@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Patients · Scribe{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-8 py-10" x-data="{ modalOpen: false }" @patient-added.window="modalOpen = false">
+
+  <div class="flex items-end justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-ink tracking-tight">Patients</h1>
+      <p class="mt-1 text-sm text-ink/55">{{ patients | length }} patient{{ 's' if patients|length != 1 else '' }} on your roster</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m21 21-4.3-4.3"/></svg>
+        <input type="search" name="q" value="{{ q }}" placeholder="Search patients…"
+               hx-get="/patients" hx-trigger="keyup changed delay:300ms, search" hx-target="#patients-table" hx-swap="innerHTML"
+               class="w-64 rounded-lg border border-line bg-white pl-9 pr-3.5 py-2.5 text-sm text-ink placeholder:text-ink/35 focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors">
+      </div>
+      <button @click="modalOpen = true" type="button"
+              class="inline-flex items-center gap-2 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white hover:bg-pine-dark transition-colors shadow-sm shadow-pine/20 whitespace-nowrap">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+        Add patient
+      </button>
+    </div>
+  </div>
+
+  <div id="patients-table">
+    {% include "patients/_table.html" %}
+  </div>
+
+  <!-- Add patient modal -->
+  <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div x-show="modalOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="absolute inset-0 bg-ink/40" @click="modalOpen = false"></div>
+
+    <div x-show="modalOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+         class="relative w-full max-w-md rounded-xl bg-white shadow-xl border border-line">
+      <div class="px-6 py-5 border-b border-line flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">Add patient</h2>
+        <button @click="modalOpen = false" type="button" class="text-ink/40 hover:text-ink">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form hx-post="/patients" hx-target="#patients-table" hx-swap="innerHTML" @htmx:after-request="if(event.detail.successful) $event.target.reset()" class="px-6 py-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-ink/80 mb-1.5">Full name</label>
+          <input name="name" type="text" required
+                 class="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors"
+                 placeholder="Ramesh Kumar">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-ink/80 mb-1.5">Age</label>
+            <input name="age" type="number" min="0" max="130"
+                   class="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors"
+                   placeholder="34">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-ink/80 mb-1.5">Gender</label>
+            <select name="gender" class="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink/80 mb-1.5">Phone <span class="text-ink/40 font-normal">(optional)</span></label>
+          <input name="phone" type="tel"
+                 class="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors"
+                 placeholder="98765 43210">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink/80 mb-1.5">Notes <span class="text-ink/40 font-normal">(optional)</span></label>
+          <textarea name="notes" rows="2"
+                    class="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm focus:border-pine focus:ring-1 focus:ring-pine outline-none transition-colors resize-none"
+                    placeholder="Known allergies, chronic conditions…"></textarea>
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <button type="submit" class="flex-1 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white hover:bg-pine-dark active:scale-[0.99] transition-all">
+            Save patient
+          </button>
+          <button type="button" @click="modalOpen = false" class="rounded-lg px-4 py-2.5 text-sm font-medium text-ink/60 hover:bg-paper transition-colors">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

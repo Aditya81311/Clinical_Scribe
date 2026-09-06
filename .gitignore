@@ -1,6 +1,10 @@
 .venv
 /.venv
 .env
-.env.examples
 *.env
-*.env.examples
+__pycache__/
+*.pyc
+.env
+scribe.db
+uploads/*
+!uploads/.gitkeep

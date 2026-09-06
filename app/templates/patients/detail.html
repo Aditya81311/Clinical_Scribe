@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} · Scribe{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-8 py-10" x-data="{ modalOpen: false, uploading: false, fileName: '' }">
+
+  <a href="/patients" class="inline-flex items-center gap-1.5 text-sm text-ink/50 hover:text-ink mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    All patients
+  </a>
+
+  <!-- Patient banner -->
+  <div class="rounded-xl border border-line bg-white shadow-sm px-7 py-6 flex items-start justify-between gap-6 flex-wrap">
+    <div class="flex items-center gap-4">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-pine-light text-pine-dark text-base font-semibold">
+        {{ patient.name[:2].upper() }}
+      </span>
+      <div>
+        <h1 class="text-xl font-semibold text-ink tracking-tight">{{ patient.name }}</h1>
+        <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink/55">
+          <span>{{ patient.age }} yrs</span>
+          <span class="text-line">·</span>
+          <span>{{ patient.gender or 'Not specified' }}</span>
+          {% if patient.phone %}
+          <span class="text-line">·</span>
+          <span class="font-mono-data">{{ patient.phone }}</span>
+          {% endif %}
+          <span class="text-line">·</span>
+          <span>Added {{ patient.created_at | timeago }}</span>
+        </div>
+        {% if patient.notes %}
+        <p class="mt-2 text-sm text-ink/60 max-w-lg">{{ patient.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <button @click="modalOpen = true" type="button"
+            class="inline-flex items-center gap-2 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white hover:bg-pine-dark transition-colors shadow-sm shadow-pine/20 whitespace-nowrap">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.5v-13m0 0L7 10m5-4.5 5 4.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 18.5h16"/></svg>
+      New consultation
+    </button>
+  </div>
+
+  <!-- Consultation history -->
+  <h2 class="mt-9 mb-4 text-sm font-semibold text-ink">Consultation history</h2>
+
+  {% if consultations %}
+  <ol class="relative border-l border-line ml-2.5 space-y-6">
+    {% for c in consultations %}
+    <li class="ml-6">
+      <span class="absolute -left-[7px] mt-1.5 h-3.5 w-3.5 rounded-full border-2 border-white
+                   {% if c.status == 'done' %}bg-pine{% elif c.status == 'processing' %}bg-amber{% else %}bg-red-500{% endif %}"></span>
+      <a href="/consultations/{{ c.id }}" class="block rounded-xl border border-line bg-white px-5 py-4 shadow-sm hover:border-pine/40 hover:shadow-md transition-all">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="text-sm font-medium text-ink">{{ c.primary_diagnosis or (c.original_name or 'Consultation') }}</p>
+            <p class="mt-0.5 text-xs text-ink/45">{{ c.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+          </div>
+          {% if c.status == 'done' %}
+            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-pine-light text-pine-dark px-2.5 py-0.5 text-xs font-medium">Done</span>
+          {% elif c.status == 'processing' %}
+            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-amber-light text-amber px-2.5 py-0.5 text-xs font-medium">
+              <span class="h-1.5 w-1.5 rounded-full bg-amber animate-pulse"></span> Processing
+            </span>
+          {% else %}
+            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-red-50 text-red-700 px-2.5 py-0.5 text-xs font-medium">Failed</span>
+          {% endif %}
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="rounded-xl border border-dashed border-line bg-white/60 px-8 py-14 text-center">
+    <p class="text-sm font-medium text-ink">No consultations recorded yet</p>
+    <p class="mt-1 text-sm text-ink/55">Upload a consultation recording to generate the first chart note.</p>
+  </div>
+  {% endif %}
+
+  <!-- New consultation modal -->
+  <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div x-show="modalOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="absolute inset-0 bg-ink/40" @click="if(!uploading) modalOpen = false"></div>
+
+    <div x-show="modalOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+         class="relative w-full max-w-md rounded-xl bg-white shadow-xl border border-line">
+      <div class="px-6 py-5 border-b border-line flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">New consultation</h2>
+        <button @click="if(!uploading) modalOpen = false" type="button" class="text-ink/40 hover:text-ink">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="upload-form" hx-post="/patients/{{ patient.id }}/consultations" hx-encoding="multipart/form-data"
+        @htmx:before-request="uploading = true" @htmx:response-error="uploading = false"
+        class="px-6 py-5 space-y-4">
+        <p class="text-sm text-ink/60">Upload a recorded consultation for <span class="font-medium text-ink">{{ patient.name }}</span>. Transcription and chart extraction run automatically.</p>
+
+        <label class="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line hover:border-pine/50 transition-colors px-4 py-8 cursor-pointer text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-ink/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15V3m0 0L8 7m4-4 4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+          <span class="text-sm font-medium text-ink" x-text="fileName || 'Choose an audio file'"></span>
+          <span class="text-xs text-ink/40" x-show="!fileName">MP3, WAV or M4A</span>
+          <input type="file" name="file" accept="audio/*" required class="hidden"
+                 @change="fileName = $event.target.files[0]?.name || ''">
+        </label>
+
+        <!-- Live recording controls -->
+        <div class="flex items-center gap-3">
+          <button id="start-record" type="button" class="rounded-lg btn-ghost">Start recording</button>
+          <button id="stop-record" type="button" disabled class="rounded-lg btn-ghost">Stop</button>
+          <span id="record-status" class="text-sm text-ink/55">Not recording</span>
+        </div>
+
+        <div x-show="uploading" class="flex items-center gap-3 rounded-lg bg-pine-light px-4 py-3">
+          <div class="waveform scale-75 origin-left"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+          <p class="text-sm text-pine-dark">Uploading, then we'll take you to live progress…</p>
+        </div>
+
+        <div class="flex items-center gap-3 pt-1">
+          <button type="submit" :disabled="uploading"
+                  class="flex-1 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white hover:bg-pine-dark active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+            <span x-show="!uploading">Start processing</span>
+            <span x-show="uploading">Uploading…</span>
+          </button>
+          <button type="button" @click="modalOpen = false" :disabled="uploading" class="rounded-lg px-4 py-2.5 text-sm font-medium text-ink/60 hover:bg-paper transition-colors disabled:opacity-40">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const startBtn = document.getElementById('start-record');
+  const stopBtn = document.getElementById('stop-record');
+  const status = document.getElementById('record-status');
+  let mediaRecorder = null;
+  let chunks = [];
+
+  startBtn.addEventListener('click', async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Media recording not supported in this browser.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      chunks = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' });
+        const file = new File([blob], 'recording.webm', { type: blob.type });
+        // upload via fetch and handle HX redirect header
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        const patientId = {{ patient.id }};
+        status.textContent = 'Uploading...';
+        startBtn.disabled = true; stopBtn.disabled = true;
+        try {
+          const res = await fetch(`/patients/${patientId}/consultations`, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: {
+              'HX-Request': 'true'
+            }
+          });
+          const hxRedirect = res.headers.get('HX-Redirect');
+          if (hxRedirect) {
+            window.location = hxRedirect;
+            return;
+          }
+          if (res.redirected) {
+            window.location = res.url;
+            return;
+          }
+          if (res.ok) {
+            // fallback: reload
+            window.location.reload();
+            return;
+          }
+          alert('Upload failed');
+        } catch (e) {
+          console.error(e);
+          alert('Upload failed');
+        } finally {
+          status.textContent = 'Not recording';
+          startBtn.disabled = false;
+        }
+      };
+      mediaRecorder.start();
+      status.textContent = 'Recording...';
+      startBtn.disabled = true; stopBtn.disabled = false;
+    } catch (err) {
+      console.error(err);
+      alert('Could not start recording: ' + err.message);
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      status.textContent = 'Processing...';
+    }
+  });
+})();
+</script>
+{% endblock %}

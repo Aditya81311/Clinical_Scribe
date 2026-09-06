@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Log in · Scribe{% endblock %}
+{% block bare_content %}
+<div class="min-h-screen grid lg:grid-cols-2">
+
+  <!-- Left: polished hero -->
+  <div class="hidden lg:flex flex-col justify-center auth-hero px-16 py-24">
+    <div class="max-w-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="brand-badge">S</div>
+        <div>
+          <h2 class="text-2xl font-semibold">Scribe</h2>
+          <p class="text-sm opacity-85">Ambient clinical documentation for modern clinics</p>
+        </div>
+      </div>
+
+      <h1 class="text-3xl font-bold mb-3">Faster charting. Better focus.</h1>
+      <p class="mb-6 text-muted">Capture the consultation as it happens and get structured notes, SOAP summaries, and action items—automatically.</p>
+
+      <div class="feature-card rounded-xl p-5 mb-4">
+        <p class="text-sm font-medium">Automated transcription</p>
+        <p class="text-xs mt-1 text-white/85">High-quality speech-to-text tailored for code-switched clinical conversations.</p>
+      </div>
+
+      <div class="feature-card rounded-xl p-5">
+        <p class="text-sm font-medium">Structured outputs</p>
+        <p class="text-xs mt-1 text-white/85">Get chief complaint, medications, investigations and a SOAP note ready for review.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: login form -->
+  <div class="flex items-center justify-center px-6 py-20">
+    <div class="w-full max-w-md auth-card p-8">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="brand-badge">S</div>
+          <div>
+            <p class="text-sm font-semibold">Scribe</p>
+            <p class="text-xs text-muted">Sign in to your account</p>
+          </div>
+        </div>
+        <a href="/signup" class="text-sm font-medium text-primary">Create account</a>
+      </div>
+
+      {% if error %}
+      <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form action="/login" method="post" class="space-y-4">
+        <div>
+          <label for="email" class="block text-sm font-medium text-muted mb-1">Email</label>
+          <input id="email" name="email" type="email" required autofocus value="{{ email or '' }}"
+                 class="w-full auth-input text-sm" placeholder="you@clinic.com">
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-muted mb-1">Password</label>
+          <input id="password" name="password" type="password" required
+                 class="w-full auth-input text-sm" placeholder="••••••••">
+        </div>
+
+        <div class="flex items-center justify-between mt-1">
+          <label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="remember"> Remember me</label>
+          <a href="#" class="text-sm text-primary">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="w-full auth-btn mt-4">Sign in</button>
+      </form>
+
+      <div class="mt-6 text-center text-sm text-muted">
+        By signing in you agree to our <a href="#" class="text-primary">Terms</a> and <a href="#" class="text-primary">Privacy Policy</a>.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

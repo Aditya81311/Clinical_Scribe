@@ -1,0 +1,45 @@
+{% if patients %}
+<div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden htmx-added">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-line text-left">
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Name</th>
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Age</th>
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Gender</th>
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Phone</th>
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Consultations</th>
+        <th class="px-6 py-3 text-xs font-medium text-ink/50">Added</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for p in patients %}
+      <tr class="hover:bg-paper/60 transition-colors cursor-pointer" onclick="window.location='/patients/{{ p.id }}'">
+        <td class="px-6 py-3.5 font-medium text-ink">
+          <div class="flex items-center gap-2.5">
+            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-pine-light text-pine-dark text-xs font-semibold">
+              {{ p.name[:2].upper() }}
+            </span>
+            {{ p.name }}
+          </div>
+        </td>
+        <td class="px-6 py-3.5 text-ink/70">{{ p.age if p.age is not none else '—' }}</td>
+        <td class="px-6 py-3.5 text-ink/70">{{ p.gender or '—' }}</td>
+        <td class="px-6 py-3.5 text-ink/70 font-mono-data text-[13px]">{{ p.phone or '—' }}</td>
+        <td class="px-6 py-3.5 text-ink/70">{{ p.consultations | length }}</td>
+        <td class="px-6 py-3.5 text-ink/45">{{ p.created_at | timeago }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="rounded-xl border border-dashed border-line bg-white/60 px-8 py-14 text-center htmx-added">
+  {% if q %}
+  <p class="text-sm font-medium text-ink">No patients match "{{ q }}"</p>
+  <p class="mt-1 text-sm text-ink/55">Try a different name.</p>
+  {% else %}
+  <p class="text-sm font-medium text-ink">No patients yet</p>
+  <p class="mt-1 text-sm text-ink/55">Add your first patient to start recording consultations.</p>
+  {% endif %}
+</div>
+{% endif %}
